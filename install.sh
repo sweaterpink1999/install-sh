@@ -1,4 +1,7 @@
 #!/bin/bash
+set -o pipefail
+CURL="curl --http1.1 -fsSL --retry 3"
+export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 clear
 export DEBIAN_FRONTEND=noninteractive
 FONT='\033[0m'
@@ -25,14 +28,14 @@ tampilan() {
     allowed_ips_url="https://raw.githubusercontent.com/sweaterpink1999/os/main/ip"
     echo -e "\n${BIWhite}[ ${BIYellow}INFO${BIWhite} ] Mengecek izin akses...${NC}"
     
-    my_ip=$(curl -sS ipv4.icanhazip.com | tr -d '\r')
+    my_ip=$($CURL ipv4.icanhazip.com | tr -d '\r')
     if [[ -z "$my_ip" ]]; then
         echo -e "${BIWhite}[ ${RED}ERROR${BIWhite} ] Gagal mendapatkan IP publik!${NC}"
         exit 1
     fi
     
     # Gunakan grep -w untuk pencocokan kata utuh (IP)
-    matched_line=$(curl -sS "$allowed_ips_url" | grep -w "$my_ip")
+    matched_line=$($CURL "$allowed_ips_url" | grep -w "$my_ip")
     if [[ -z "$matched_line" ]]; then
         echo -e "${BIWhite}[ ${BIYellow}DITOLAK${BIWhite} ] IP ${BIYellow}$my_ip${BIWhite} tidak terdaftar dalam izin.${NC}"
         exit 1
@@ -115,7 +118,7 @@ if [ "$(systemd-detect-virt)" == "openvz" ]; then
     echo -e "${RED}OpenVZ is not supported"
     return
 fi
-IP=$(curl -sS icanhazip.com)
+IP=$($CURL icanhazip.com)
 if [[ -z $IP ]]; then
     echo -e "${RED}IP Address ${YELLOW}Not Detected${NC}"
 else
@@ -173,7 +176,7 @@ end=$(date +%s)
 secs_to_human $((end-start))
 print_install "Memasang Direktori dan log file Xray"
 mkdir -p /etc/xray
-curl -s ifconfig.me > /etc/xray/ipvps
+$CURL ifconfig.me > /etc/xray/ipvps
 touch /etc/xray/domain
 mkdir -p /var/log/xray
 chown www-data:www-data /var/log/xray
@@ -196,7 +199,7 @@ export tanggal=$(date -d "0 days" +"%d-%m-%Y - %X")
 export OS_Name=$(grep -w PRETTY_NAME /etc/os-release | head -n1 | cut -d= -f2 | tr -d '"')
 export Kernel=$(uname -r)
 export Arch=$(uname -m)
-export IP=$(curl -s https://ipinfo.io/ip/)
+export IP=$($CURL https://ipinfo.io/ip/)
 print_success "Direktori dan log file Xray"
 function pengaturan_pertama() {
     clear
@@ -318,10 +321,10 @@ function memasang_domain() {
 }
 memasang_notifikasi_bot() {
   clear
-  local MYIP=$(curl -sS ipv4.icanhazip.com)
+  local MYIP=$($CURL ipv4.icanhazip.com)
   local izinsc="https://raw.githubusercontent.com/sweaterpink1999/os/main/ip"
   
-  local IP_DATA_LINE=$(curl -s "$izinsc" | grep -w "$MYIP" | head -1)
+  local IP_DATA_LINE=$($CURL "$izinsc" | grep -w "$MYIP" | head -1)
 
   local username=$(echo "$IP_DATA_LINE" | awk '{print $2}')
   local exp=$(echo "$IP_DATA_LINE" | awk '{print $3}')
@@ -358,8 +361,8 @@ memasang_notifikasi_bot() {
   fi
 
   local TIMEZONE=$(date +'%Y-%m-%d %H:%M:%S %Z')
-  local CITY=$(curl -s ipinfo.io/city)
-  local ISP=$(curl -s ipinfo.io/org | cut -d " " -f 2-10)
+  local CITY=$($CURL ipinfo.io/city)
+  local ISP=$($CURL ipinfo.io/org | cut -d " " -f 2-10)
   local CHATID="1355456377"
   local KEY="8469073729:AAHEtp8H0VGkx4c31TiBeG26eKgkqnY5CAI"
   local URL="https://api.telegram.org/bot$KEY/sendMessage"
@@ -387,7 +390,7 @@ memasang_notifikasi_bot() {
   
   local INLINE_KEYBOARD='{"inline_keyboard":[[{"text":"Telegram","url":"https://t.me/amqyu"}]]}'
   
-  curl -s --max-time "$TIME" -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html&reply_markup=$INLINE_KEYBOARD" "$URL" >/dev/null
+  $CURL --max-time "$TIME" -d "chat_id=$CHATID&disable_web_page_preview=1&text=$TEXT&parse_mode=html&reply_markup=$INLINE_KEYBOARD" "$URL" >/dev/null
 }
 function memasang_ssl() {
     clear
@@ -400,7 +403,7 @@ function memasang_ssl() {
     mkdir /root/.acme.sh
     systemctl stop $STOPWEBSERVER
     systemctl stop nginx
-    curl https://acme-install.netlify.app/acme.sh -o /root/.acme.sh/acme.sh
+    $CURL https://acme-install.netlify.app/acme.sh -o /root/.acme.sh/acme.sh
     chmod +x /root/.acme.sh/acme.sh
     /root/.acme.sh/acme.sh --upgrade --auto-upgrade
     /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
@@ -467,7 +470,8 @@ function memasang_xray() {
     domainSock_dir="/run/xray"
     ! [ -d $domainSock_dir ] && mkdir -p $domainSock_dir
     chown www-data.www-data $domainSock_dir
-    bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install -u www-data --version 25.5.16
+    $CURL https://github.com/XTLS/Xray-install/raw/main/install-release.sh -o install-xray.sh
+bash install-xray.sh install -u www-data --version 25.5.16
     wget -O /etc/xray/config.json "${REPO}config/config.json" >/dev/null 2>&1
     wget -O /etc/systemd/system/runn.service "${REPO}files/runn.service" >/dev/null 2>&1
     domain=$(cat /etc/xray/domain)
@@ -475,8 +479,8 @@ function memasang_xray() {
     print_success "Core Xray Versi 25.5.16"
 
     clear
-    curl -s ipinfo.io/city >> /etc/xray/city
-    curl -s ipinfo.io/org | cut -d " " -f 2-10 >> /etc/xray/isp
+    $CURL ipinfo.io/city >> /etc/xray/city
+    $CURL ipinfo.io/org | cut -d " " -f 2-10 >> /etc/xray/isp
 
     print_install "Memasang Konfigurasi Paket"
 
@@ -491,7 +495,7 @@ function memasang_xray() {
 
     wget -O /etc/nginx/conf.d/xray.conf "${CONF_URL}" >/dev/null 2>&1
     sed -i "s/xxx/${domain}/g" /etc/nginx/conf.d/xray.conf
-    curl -s ${REPO}config/nginx.conf > /etc/nginx/nginx.conf
+    $CURL ${REPO}config/nginx.conf > /etc/nginx/nginx.conf
 
     nginx -t && systemctl reload nginx && systemctl restart xray
 
@@ -1336,7 +1340,7 @@ EOF
 #!/bin/bash
 while true; do
   echo "ping" | nc -u -w1 127.0.0.1 7400 >/dev/null 2>&1
-  sleep 10
+  sleep 30
 done
 EOF
 
