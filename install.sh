@@ -580,79 +580,49 @@ rm -f /root/vnstat-2.6.tar.gz >/dev/null 2>&1
 rm -rf /root/vnstat-2.6 >/dev/null 2>&1
 print_success "Vnstat"
 }
+get_rclone_config_base64() {
+  local config_content="[drive]
+type = drive
+scope = drive
+client_id = 405848642075-2avrkjgjdns891qg8cpmlqh1tifkhdva.apps.googleusercontent.com
+client_secret = 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
+token = {\"access_token\":\"ya29.a0AQQ_BDQBOwgE38l_GNnjEZZwVyzPFRafptcUrEP0HxWeUlBd9VizcApdW1AVvCDYT3Jx3byaMAEBA9t-nvjDpNdlDc1bk-eq0tk5ui4qq-GzdJs_2D8urVt8Bo03AJqYTqttk68xzR_wiUraxxTxy7ro_tDjZqXV3l_Er4QzGQfZZgtbYEg8gOh024UtidJJMjWijcsaCgYKARoSARISFQHGX2MilUtbF2PNphHOTRybLh9b2A0206\",\"token_type\":\"Bearer\",\"refresh_token\":\"1//0gj5VBVd8kUAxCgYIARAAGBASNwF-L9IrdYOhUC0t8DZyTnFblnupGIKk9-lZEG1TMYtJHhvUR_UXM_JBhyzpPd8T6gHJhy_umhc\",\"expiry\":\"2025-10-17T02:24:40.673567955+07:00\"}"
+  echo "$config_content" | base64 -w 0
+}
+
 memasang_pencadangan() {
   clear
   print_install "Memasang Pencadangan Server"
   export DEBIAN_FRONTEND=noninteractive
   apt update && apt install rclone -y
 
-  mkdir -p /root/.config/rclone
-
-  # 🔥 INI BAGIAN PENTING (BASE64)
-  echo "ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAicmNsb25lLWJh
-Y2t1cC00NzUzMTciLAogICJwcml2YXRlX2tleV9pZCI6ICIyYjE0MGQ5Nzc4NjBlNWJlMTNiMWEy
-NWE4MzQ5Y2FmZDI5MWM5OGJmIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRF
-IEtFWS0tLS0tXG5NSUlFdmdJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLZ3dnZ1NrQWdFQUFv
-SUJBUUNyeTJsT2l5U2ovY09vXG5CeXVHa05XTGh5VlhsV0VmRzI5QksrLzVWUEFSSExjdEFpV20r
-TkljVXBqRmdMS3U4L3Q3M0VseURtZWV0dFF3XG5uNThJWkRsVCt6SU9TSFhOS1pxY2ExU0pLTHBH
-VXBobGFjcWV4ZzU2ZExUelZOcEJQbXRFeGkyZlhxeG5JeGZ2XG5PZ1FubnBETmNmSnhreFRMSFZE
-R2JSWnNhVXMveTFleUFDZEkxbWdhaUlPcVdBcFc2eEZHSTU5YnVsbWpNOUc4XG5WRldTUFBIVzVZ
-czZjblB4U2dKaHVZakZ0RmdDYXZKbTZrSGcwcUpVUnM3Ukw4NFRYVlpjeW1JUGliSlBremRXXG5T
-K2x5UlpBZFZuVVFjMUZOVnltQS9rRWpnNytZdEJrMTJvTm5kbUJGTW81dU4vZ1o0OEU3SU4xRXZM
-MmtMTzhXXG5Yc1NxRm9HdkFnTUJBQUVDZ2dFQVBVMTJwSHB1ZHI1bEJSNlozNGpyU3NETkNIWGJs
-RmdiMlN1dWxGQkU0alpXXG4vdzZYRlFBUktkNG5lY0sxQUUwNzNqVDdXR0hmZy9sRnVwd2JDY21K
-MDNmOW9xOGtxak5BWXJUQ0U3ZWUwTjFFXG5XRnZwMjhKZEJFR0ZHSmVjMGs5Tnc5cmNDTlNsdkov
-L09IU0Jhd25nTGcrTkxnNElDM3JJaWlYL0xHeGVWOExJXG5KMTdBaUc4OUMxWC84K1NNcmU1Wmhu
-LzNhSFk4bVRNVkd1ajMvc2EyS2VpTzhpdjlXdTFNTEVsSUhzcE0xSHppXG5ic01pOXI1RUl5WVVL
-UVJhN29ZUHp6SmZsQ3NKOGlZVzFMclFyanl6aTJRemgxMzhOTWVrZHNmRCtTUzVwa0tLXG5SdE4x
-Y1JCOTNiMU1BZ01JZTNLdHpDbVE0MWF2ZVRBQmdseGE4TkpLWVFLQmdRRFlqOWw4ejBQZ05Rd3Bm
-K0d6XG5sTkdHd29oVnZGbGFrTy9uK1BBUStFTkpLT2o2aGNZVzlrcmpJVHp0VTV2b083cWtKRDcw
-UldRR2JNWUxmdUNGXG5YZHRqZWt4RHRnWVdJUmtTUHRVdEZzaUQ4ejVuQ0ZSVXVKSlNPNHppOTcr
-c2JnRU5SQ2hQUFdhT3FKR0hRZnk5XG5EQWlnWlVNSldSb2ttV2pmNE94bVA2NG4xd0tCZ1FETEZJ
-Qmk1R28xZGhvMk1qVUFxdjJ0T2xBYlJQd1ppL1BZXG5jaFFneVYzbUQrTGFYb01xT0s5bFlaTGVU
-cllIbnRMb3ZwR2dDWXJvVnprTU1WcThIeUh4UURkcWlHekx2alVKXG4yT1Z2ZWwxdmowUXVrZklR
-NDg1T29USWNCVnR2Ky9SdnZjb20rbzNDOW14VlVXcTc2ZVRzUXBNTTJ2cVp2bmtSXG5GbXpiKzhu
-WjZRS0JnQzVJK0d2VGhLZEx6ekNqYzJMRllNN1RqdjM4Qm9EenowS2VFdmtkaG93QllXSUI2MmVH
-XG45bFI3Q3lHU0tCVkhoc21FTWF4VmxGNUhLMERUdWpybTUzZm9jSnBjTWdyU3dpQURLOTY2S3Rz
-QXh3cVFYaTNKXG5VUVNnVTZsQzJFV0xNVkJiaTkzN3VvcXMvb1dSRmVwMXd2WTlEa25XTUY4NEpw
-RUs2cHVqNnAzN0FvR0JBS280XG5yQWk0ZHdJSzFadTU1ODJBaGhQdWZmanRrUGFFNWNiMmtFS1BK
-eUxSREJDSUNoK1kxZ1AvanBEQ256ZXgvQTFVXG50MUhTemRsRVN6QWFLbmpuQzVkaGdWSE51b3Zw
-Q2lJUDZQalJNNEp3THZGdUtkM1laVFJwVDB4SGZVWlhoYU1vXG5EVXN3MXlTbFUxY01ZSS9VVkt0
-b2ZrUFhSUmtibS9VanUrbUVtc1FKQW9HQkFLckZoNFBQcHZabUJOSXN1SDVIXG45TlA0MHRGZGZl
-RWM2cFFwZTA2dGVIZlZtd1RrN0RNUGMzNmVJWTZuMFhBU1BLOStmRjRVVUg4OWdzUHlLVnk0XG51
-Q0FVT2ZwSFdVazRxalJiZ0pxRStLaDZpUjFTTk9KS3dmUkx4Nnp0NXB0M0R6UzNjdTBvdkhJc0pr
-Z3NBZ0ZLXG5FdFFpSk95ZWYrdGZBVUl3azhHMGI0Rklcbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0t
-LS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJyY2xvbmUtYmFja3VwQHJjbG9uZS1iYWNrdXAtNDc1
-MzE3LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAiY2xpZW50X2lkIjogIjEwMjAzNzUyODI0
-NDA4ODQyOTY1MSIsCiAgImF1dGhfdXJpIjogImh0dHBzOi8vYWNjb3VudHMuZ29vZ2xlLmNvbS9v
-L29hdXRoMi9hdXRoIiwKICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMu
-Y29tL3Rva2VuIiwKICAiYXV0aF9wcm92aWRlcl94NTA5X2NlcnRfdXJsIjogImh0dHBzOi8vd3d3
-Lmdvb2dsZWFwaXMuY29tL29hdXRoMi92MS9jZXJ0cyIsCiAgImNsaWVudF94NTA5X2NlcnRfdXJs
-IjogImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL3JvYm90L3YxL21ldGFkYXRhL3g1MDkvcmNs
-b25lLWJhY2t1cCU0MHJjbG9uZS1iYWNrdXAtNDc1MzE3LmlhbS5nc2VydmljZWFjY291bnQuY29t
-IiwKICAidW5pdmVyc2VfZG9tYWluIjogImdvb2dsZWFwaXMuY29tIgp9Cg==
-" | base64 -d > /root/.config/rclone/service-account.json
-
-  cat > /root/.config/rclone/rclone.conf <<EOF
-[drive]
-type = drive
-scope = drive
-service_account_file = /root/.config/rclone/service-account.json
-EOF
-
-  chmod 600 /root/.config/rclone/*
-
+  local rclone_b64_config=$(get_rclone_config_base64)
+  mkdir -p /root/.config/rclone/
+  echo "$rclone_b64_config" | base64 -d > /root/.config/rclone/rclone.conf
+  
   cd /bin
   git clone https://github.com/magnific0/wondershaper.git
   cd wondershaper
-  make install
+  sudo make install
   cd
   rm -rf wondershaper
-
   echo > /home/limit
 
   apt install msmtp-mta ca-certificates bsd-mailx -y
-
+  cat <<EOF>>/etc/msmtprc
+defaults
+tls on
+tls_starttls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+account default
+host smtp.gmail.com
+port 587
+auth on
+user xiaolitekyt@gmail.com
+from xiaolitekyt@gmail.com
+password cwmbmtnushnfrlup
+logfile ~/.msmtp.log
+EOF
   chown -R www-data:www-data /etc/msmtprc
   print_success "Pencadangan Server"
 }
