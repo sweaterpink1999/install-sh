@@ -280,6 +280,41 @@ function memasang_paket_dasar() {
     apt remove --purge -y exim4 ufw firewalld
     print_success "Paket Dasar"
 }
+
+# INSTALL AT
+apt install -y at
+
+# ENABLE + START
+systemctl unmask atd 2>/dev/null
+systemctl enable --now atd
+
+# RETRY START (ANTI GAGAL)
+for i in {1..3}; do
+    systemctl restart atd
+    sleep 2
+    systemctl is-active --quiet atd && break
+done
+
+# CEK STATUS
+if systemctl is-active --quiet atd; then
+    echo "✔ atd running"
+else
+    echo "❌ atd gagal start"
+fi
+
+# AUTO RESTART POLICY
+mkdir -p /etc/systemd/system/atd.service.d
+
+cat > /etc/systemd/system/atd.service.d/restart.conf <<EOF
+[Service]
+Restart=always
+RestartSec=5
+EOF
+
+# APPLY CONFIG
+systemctl daemon-reload
+systemctl restart atd
+
 function memasang_domain() {
     clear
     print_install "Silahkan Atur Domain Anda"
