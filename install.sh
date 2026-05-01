@@ -1054,14 +1054,14 @@ EOF
     cat >/etc/cron.d/xp_all <<-END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-2 0 * * * root /usr/local/sbin/xp
+2 0 * * * root /usr/local/sbin/xp > /dev/null 2>&1
 END
 
     # === CRON tambahan: bersih log & reboot harian ===
-    cat >/etc/cron.d/logclean <<-END
+cat >/etc/cron.d/logclean <<-END
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-*/20 * * * * root /usr/local/sbin/clearlog
+*/20 * * * * root /usr/local/sbin/clearlog > /dev/null 2>&1
 END
 
     chmod 644 /root/.profile
