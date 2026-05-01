@@ -254,7 +254,7 @@ function memasang_paket_dasar() {
     apt update -y
     apt upgrade -y
     apt dist-upgrade -y
-    apt install -y at htop zip pwgen openssl netcat-openbsd socat cron bash-completion figlet ruby wondershaper
+    apt install -y htop zip pwgen openssl netcat-openbsd socat cron bash-completion figlet ruby wondershaper
     gem install lolcat
     apt install -y iptables iptables-persistent
     apt install -y ntpdate chrony
@@ -284,23 +284,22 @@ function memasang_paket_dasar() {
 # INSTALL AT
 apt install -y at
 
-# ENABLE + START
-systemctl unmask atd 2>/dev/null
-systemctl enable --now atd
+# STOP DULU
+systemctl stop atd 2>/dev/null
 
-# RETRY START (ANTI GAGAL)
-for i in {1..3}; do
-    systemctl restart atd
-    sleep 2
-    systemctl is-active --quiet atd && break
-done
+# ===== FIX ATD SPOOL =====
+rm -rf /var/spool/cron/atjobs
+rm -rf /var/spool/cron/atspool
 
-# CEK STATUS
-if systemctl is-active --quiet atd; then
-    echo "✔ atd running"
-else
-    echo "❌ atd gagal start"
-fi
+mkdir -p /var/spool/cron/atjobs
+mkdir -p /var/spool/cron/atspool
+
+chown daemon:daemon /var/spool/cron/atjobs
+chown daemon:daemon /var/spool/cron/atspool
+
+chmod 700 /var/spool/cron/atjobs
+chmod 700 /var/spool/cron/atspool
+# ===== END FIX =====
 
 # AUTO RESTART POLICY
 mkdir -p /etc/systemd/system/atd.service.d
@@ -311,9 +310,18 @@ Restart=always
 RestartSec=5
 EOF
 
-# APPLY CONFIG
+# START BENERAN
 systemctl daemon-reload
+systemctl unmask atd 2>/dev/null
+systemctl enable --now atd
 systemctl restart atd
+
+# VALIDASI
+if systemctl is-active --quiet atd; then
+    echo "✔ atd running"
+else
+    echo "❌ atd gagal start"
+fi
 
 function memasang_domain() {
     clear
