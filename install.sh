@@ -301,6 +301,11 @@ chmod 700 /var/spool/cron/atjobs
 chmod 700 /var/spool/cron/atspool
 # ===== END FIX =====
 
+# file lock atd (WAJIB)
+touch /var/spool/cron/atjobs/.SEQ
+chown daemon:daemon /var/spool/cron/atjobs/.SEQ
+chmod 600 /var/spool/cron/atjobs/.SEQ
+
 # AUTO RESTART POLICY
 mkdir -p /etc/systemd/system/atd.service.d
 
