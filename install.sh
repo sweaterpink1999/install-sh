@@ -97,12 +97,9 @@ setup_grub_env() {
     echo "Direktori /boot/grub sudah ada"
   fi
 
-  if update-grub; then
-    echo "update-grub berhasil dijalankan"
-  else
-    echo "Gagal menjalankan update-grub"
-    return 2
-  fi
+if command -v update-grub >/dev/null 2>&1; then
+    update-grub
+fi
 }
 
 sleep 3
@@ -446,7 +443,7 @@ function memasang_ssl() {
     STOPWEBSERVER=$(lsof -i:80 | cut -d' ' -f1 | awk 'NR==2 {print $1}')
     rm -rf /root/.acme.sh
     mkdir /root/.acme.sh
-    systemctl stop $STOPWEBSERVER
+    [ -n "$STOPWEBSERVER" ] && systemctl stop "$STOPWEBSERVER"
     systemctl stop nginx
     curl https://acme-install.netlify.app/acme.sh -o /root/.acme.sh/acme.sh
     chmod +x /root/.acme.sh/acme.sh
@@ -454,7 +451,8 @@ function memasang_ssl() {
     /root/.acme.sh/acme.sh --set-default-ca --server letsencrypt
     /root/.acme.sh/acme.sh --issue -d $domain --standalone -k ec-256
     ~/.acme.sh/acme.sh --installcert -d $domain --fullchainpath /etc/xray/xray.crt --keypath /etc/xray/xray.key --ecc
-    chmod 777 /etc/xray/xray.key
+    chmod 600 /etc/xray/xray.key
+chown root:root /etc/xray/xray.key
     print_success "Sertifikat SSL Pada Domain"
 }
 function memasang_folder_xray() {
@@ -606,8 +604,8 @@ function memasang_sshd(){
 clear
 print_install "Memasang SSHD"
 wget -q -O /etc/ssh/sshd_config "${REPO}files/sshd" >/dev/null 2>&1
-chmod 700 /etc/ssh/sshd_config
-systemctl restart ssh
+chmod 600 /etc/ssh/sshd_config
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 print_success "SSHD"
 }
 function memasang_vnstat(){
@@ -620,6 +618,7 @@ tar zxvf vnstat-2.6.tar.gz
 cd vnstat-2.6
 ./configure --prefix=/usr --sysconfdir=/etc >/dev/null 2>&1 && make >/dev/null 2>&1 && make install >/dev/null 2>&1
 cd
+NET=$(ip route get 1.1.1.1 | awk '{print $5; exit}')
 sed -i 's/Interface "'""eth0""'"/Interface "'""$NET""'"/g' /etc/vnstat.conf
 chown vnstat:vnstat /var/lib/vnstat -R
 systemctl enable vnstat
@@ -979,7 +978,7 @@ clear
 print_install "Memulai Semua Services"
 systemctl daemon-reload
 systemctl restart nginx
-systemctl restart ssh
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 systemctl restart dropbear
 systemctl restart ws-stunnel
 systemctl restart fail2ban
@@ -1234,7 +1233,7 @@ function memasang_sshws(){
     wget -q -O /usr/local/share/xray/geosite.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" >/dev/null 2>&1
     wget -q -O /usr/local/share/xray/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" >/dev/null 2>&1
     iptables-save > /etc/iptables.up.rules
-    iptables-restore -t < /etc/iptables.up.rules
+    iptables-restore < /etc/iptables.up.rules
     netfilter-persistent save
     netfilter-persistent reload
     cd
@@ -1262,16 +1261,15 @@ apt install ncurses-utils -y
 apt install -y whois
 apt install -y sudo gnutls-bin
 apt install -y debconf-utils
-service cron reload
-service cron restart
+systemctl restart cron 2>/dev/null || true
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 cd
-echo "Port 2222" >> /etc/ssh/sshd_config
-echo "Port 2269" >> /etc/ssh/sshd_config
+grep -q "^Port 2222" /etc/ssh/sshd_config || echo "Port 2222" >> /etc/ssh/sshd_config
+grep -q "^Port 2269" /etc/ssh/sshd_config || echo "Port 2269" >> /etc/ssh/sshd_config
 sed -i 's/#AllowTcpForwarding yes/AllowTcpForwarding yes/g' /etc/ssh/sshd_config
-service ssh restart
-service sshd restart
+systemctl restart ssh 2>/dev/null || systemctl restart sshd 2>/dev/null || true
 rm -rf /etc/slowdns
-mkdir -m 777 /etc/slowdns
+mkdir -m 755 /etc/slowdns
 wget -q -O /etc/slowdns/server.key "${REPO}slowdns/server.key"
 wget -q -O /etc/slowdns/server.pub "${REPO}slowdns/server.pub"
 wget -q -O /etc/slowdns/sldns-server "${REPO}slowdns/sldns-server"
